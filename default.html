@@ -1,0 +1,319 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Test</title>
+</head>
+<body>
+	<body>
+		<div><button type="button" class="btn" onclick="setDevice()">Set device</button></div>
+		<br>
+		<div><button type="button" class="btn" onclick="setRealtime('0001')">Set real time id 0001</button></div>
+		<br>
+		<div><button type="button" class="btn" onclick="setRealtimeRan()">Set real time id xxxx</button></div>
+		<br>
+		<div><button type="button" class="btn" onclick="pushData('0001')">Push id 0001</button></div>
+		<br>
+		<div><button type="button" class="btn" onclick="pushRan()">Push id xxxx</button></div>
+
+  <!-- Insert these scripts at the bottom of the HTML, but before you use any Firebase services -->
+
+  <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+  <script src="https://www.gstatic.com/firebasejs/7.8.0/firebase-app.js"></script>
+
+  <!-- Add Firebase products that you want to use -->
+  <script src="https://www.gstatic.com/firebasejs/7.8.0/firebase-database.js"></script>
+
+
+	<script>
+	  // Your web app's Firebase configuration
+	  var firebaseConfig = {
+	    apiKey: "AIzaSyDOz_a-CO1FPWvNO322BpUN9hgdtv2GsKU",
+	    authDomain: "test-702f6.firebaseapp.com",
+	    databaseURL: "https://test-702f6.firebaseio.com",
+	    projectId: "test-702f6",
+	    storageBucket: "test-702f6.appspot.com",
+	    messagingSenderId: "860182684889",
+	    appId: "1:860182684889:web:05aa165127f58604"
+	  };
+	  // Initialize Firebase
+	  firebase.initializeApp(firebaseConfig);
+
+	  setDevice = () => {
+	  	firebase.database().ref("Temp/Device").set([
+	  		{ id: '0001', description: 'room 0001' },
+	  		{ id: '0002', description: 'room 0002' },
+	  		{ id: '0003', description: 'room 0003' },
+	  		{ id: '0004', description: 'room 0004' },
+	  		{ id: '0005', description: 'room 0005' },
+			]);
+	  }
+
+	  setRealtime = (id) => {
+	  	// Math.random() * (max - min) + min;
+	  	let t = Math.floor(Math.random() * (15 - 0+ 1) + 0);
+	  	let h = Math.floor(Math.random() * (80 - 10+ 1) + 10);
+	  	firebase.database().ref("Temp/Realtime/"+id).set({ 
+				id: id, humidity: h, temperature: t, timestamp : new Date().getTime()  
+			});
+	  }
+
+	  setRealtimeRan = () => {
+	  	var textArray = [
+		    '0001',
+		    '0002',
+		    '0003',
+		    '0004',
+		    '0005',
+			];
+			var id = textArray[Math.floor(Math.random()*textArray.length)]
+			setRealtime(id)
+	  }
+
+	  pushData = (id) => {
+	  	// Math.random() * (max - min) + min;
+	  	let t = Math.floor(Math.random() * (15 - 0+ 1) + 0);
+	  	let h = Math.floor(Math.random() * (80 - 10+ 1) + 10);
+	  	let data = { 
+				id: id, 
+				humidity: h, 
+				temperature: t, 
+				timestamp : new Date().getTime()  
+			}
+	  	firebase.database().ref("Temp/Push/"+id).push(data);
+			console.log('pushData =>', data)
+	  }
+
+	  pushRan = () => {
+	  	var textArray = [
+		    '0001',
+		    '0002',
+		    '0003',
+		    '0004',
+		    '0005',
+			];
+			var id = textArray[Math.floor(Math.random()*textArray.length)]
+			pushData(id)
+	  }
+
+
+
+
+
+
+
+	  // query data	  
+	  let devices = []
+		var query = firebase.database().ref("Temp/device").orderByKey();
+		query.once("value")
+		  .then(function(snapshot) {
+		  	let n = snapshot.numChildren()
+		  	let dataArr = []
+		    snapshot.forEach(function(childSnapshot) {
+		      // key will be "ada" the first time and "alan" the second time
+		      var key = childSnapshot.key;
+		      // childData will be the actual contents of the child
+	      	var childData = childSnapshot.val();
+		      // console.log(' key, childData =', key, childData)
+		      dataArr.push(childData)	
+		      // Cancel enumeration
+		      // return true;
+		      if(--n == 0) filterDescription(dataArr)
+		  });
+		});
+
+		let dataDescription = []
+		function filterDescription(dataArr) {
+			console.log(' filterDescription dataArr =', dataArr)
+			dataDescription = dataArr
+			feedAll(dataDescription)
+		}
+
+		// listen data
+		var listen = firebase.database().ref("Temp/Realtime");
+		listen.on("value", function(snapshot) {
+			let n = snapshot.numChildren()
+		  let dataArr = []
+	    snapshot.forEach(function(childSnapshot) {
+	      // key will be "ada" the first time and "alan" the second time
+	      var key = childSnapshot.key;
+	      // childData will be the actual contents of the child
+      	var childData = childSnapshot.val();
+	      // console.log(' key =', snapshot.numChildren(), key, childData)
+	      dataArr.push(childData)	
+	      // Cancel enumeration
+	      // return true;
+
+      	if(--n == 0) { 
+      		console.log('Realtime listen ---------------------------------', n)
+	      	mapDescription(dataDescription, dataArr)	      	
+	      }
+		  });
+		});
+
+		function mapDescription(dataDescription, dataArr) {
+			console.log(' mapDescription dataArr =', dataArr)
+			let n = dataArr.length
+			dataDescription.forEach((data) => {
+
+				const result = dataArr.map((arr) => {
+				  if(data.id == arr.id) arr.description=data.description 
+				  return arr
+				})
+				if(--n == 0) {
+					console.log('mapDescription', result) 
+				}
+		
+			})
+		}
+
+		// var queryFilter = firebase.database().ref("Temp/Realtime");
+		// queryFilter.once("value")
+		//   .then(function(snapshot) {
+		//   	let n = snapshot.numChildren()
+		//   	let dataArr = []
+		//   	// console.log('1 ---------------------------------', n)
+		//     snapshot.forEach(function(childSnapshot) {
+		//       // key will be "ada" the first time and "alan" the second time
+		//       var key = childSnapshot.key;
+		//       // childData will be the actual contents of the child
+	 //      	var childData = childSnapshot.val();
+		//       // console.log('queryFilter key =', key, childData)
+		//       dataArr.push(childData)		      
+		//       // Cancel enumeration
+		//       // return true;
+		      
+		//       if(--n == 0) { 		      	
+		//       	console.log('Realtime ---------------------------------', n)
+		//       	mapDescription(dataDescription, dataArr)
+		//       }
+		//   });
+		// });
+
+		var textArray = [
+	    '0001',
+	    '0002',
+	    '0003',
+	    '0004',
+	    '0005',
+		];
+		var randomNumber = Math.floor(Math.random()*textArray.length);
+		// push data
+		// firebase.database().ref("Temp/Push/"+textArray[randomNumber]).push({ 
+		// 	"id": textArray[randomNumber], "h" : 25, "t" : 11, "timestamp" : new Date().getTime() } 
+		// 	);
+
+		// firebase.database().ref("Temp/Realtime/").push({ 
+		// 	"id": textArray[randomNumber], "h" : 25, "t" : 11, "timestamp" : new Date().getTime() } 
+		// 	);
+
+		
+		// var queryFilter = firebase.database().ref("Temp/Push/"+textArray[randomNumber])
+		// 	.orderByChild('timestamp')
+		// 	.startAt(1581842954174)
+		// 	  .endAt(1581843564050) ;
+		// queryFilter.once("value")
+		//   .then(function(snapshot) {
+		//   	let n = snapshot.numChildren()
+		//   	let dataArr = []
+		//   	// console.log('1 ---------------------------------', n)
+		//     snapshot.forEach(function(childSnapshot) {
+		//       // key will be "ada" the first time and "alan" the second time
+		//       var key = childSnapshot.key;
+		//       // childData will be the actual contents of the child
+	 //      	var childData = childSnapshot.val();
+		//       // console.log('queryFilter key =', key, childData)
+		//       dataArr.push(childData)		      
+		//       // Cancel enumeration
+		//       // return true;
+		      
+		//       if(--n == 0) { 
+		//       	console.log('Push '+textArray[randomNumber]+'---------------------------------', n)
+		//       	mapDescription(dataDescription, dataArr)		      	
+		//       }
+		//   });
+		// });
+
+		PushAll = (devices)=> {
+			console.log('========================= devices.length', devices.length)
+			let dataArr = []
+			let k = devices.length
+			devices.forEach(function(device) {
+				console.log('=========================', device.id)				
+				var queryFilter = firebase.database().ref("Temp/Push/"+device.id)
+					.orderByChild('timestamp')
+					.startAt(1581842954174)
+					  .endAt(1581843564050) ;
+				queryFilter.once("value")
+				  .then(function(snapshot) {
+				  	let n = snapshot.numChildren()
+				  	// let dataArr = []
+				  	// console.log('1 ---------------------------------', n)
+				    snapshot.forEach(function(childSnapshot) {
+				      // key will be "ada" the first time and "alan" the second time
+				      var key = childSnapshot.key;
+				      // childData will be the actual contents of the child
+			      	var childData = childSnapshot.val();
+				      // console.log('queryFilter key =', key, childData)
+				      dataArr.push(childData)		      
+				      // Cancel enumeration
+				      // return true;
+				      
+				      if(--n == 0 ) { 
+				      	if(--k == 0 ) { 
+					      	console.log('feed all ---------------------------------', n, k, dataArr)
+					      	mapDescription(dataDescription, dataArr)	
+				      	}	      	
+				      }
+				  });
+				});
+			});
+		}
+
+		getPush = () => {
+			let dataRes = []
+			var queryFilter = firebase.database().ref("Temp/Push")
+				// .orderByChild('timestamp')
+				// .startAt(1581706797058)
+				// .endAt(1581706961726) //.where({ id: '0001'});
+				.orderByChild('id').equalTo('0001');
+			
+			queryFilter.once("value")
+			  .then(function(snapshot) {
+			  	let n = snapshot.numChildren()
+			    snapshot.forEach(function(childSnapshot) {
+			      // key will be "ada" the first time and "alan" the second time
+			      var key = childSnapshot.key;
+			      // childData will be the actual contents of the child
+		      	var childData = childSnapshot.val();
+			      // console.log('queryFilter key =', key, childData)
+			      dataRes.push(childData)		      
+			      // Cancel enumeration
+			      // return true;
+
+			      if(--n == 0) { 
+			      	console.log('feed all ---------------------------------', n)
+			      	mapDescription(dataDescription, dataArr)		      	
+			      }
+			  });
+			});
+		}
+
+		function filterTimestamp() {
+			
+			var data = dataRes.filter(function(obj) {
+			  return obj.timestamp >= 1581706797058 && obj.timestamp <= 1581707873107;
+			});
+			console.log('filterTimestamp dataRes 1 =', data)
+			// var dataSort = 
+			data.sort(function(a,b) {
+			    return b.timestamp -a.timestamp; // most to less
+			});
+			console.log('filterTimestamp dataRes 2 =', data)
+			mapDescription(dataDescription, data)
+		}
+
+
+	</script>
+</body>
+</html>

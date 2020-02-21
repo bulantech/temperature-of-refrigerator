@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Bootstrap Example</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.10.20/css/dataTables.bootstrap4.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.13/c3.min.css">
+
+  <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.0.1/css/tempusdominus-bootstrap-4.min.css" />
+  
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+  
+  <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.10.20/js/dataTables.bootstrap4.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.15.0/d3.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.13/c3.min.js"></script>
+  
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.0.1/js/tempusdominus-bootstrap-4.min.js"></script>
+
+</head>
+<body>
+
+<div class="jumbotron text-center">
+  <h1>ระบบบันทึกข้อมูลอุณภูมิ และ ความชื้น</h1>
+  <p>สำนักงานสาธารณสุขอำเภอพนัสนิคม</p> 
+</div>
+  <div class="container">
+  <!-- <div class="row"> -->
+    <div class="text-center"><h3>Feed data</h3></div>
+
+    <div class="card my-4">
+      <div class="card-body  text-center"> 
+        <div id="chart"></div>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-body  text-center">    
+        <form class="mt-4">
+
+          <div class="form-group row justify-content-md-center">
+            <label for="inputEmail3" class="col-form-label">เลือกอุปกรณ์</label>
+            <div class="col-sm-3">
+              <select id="selectID" class="custom-select">
+                <option selected>Open this select menu</option>
+                <option value="0001">01866</option>
+                <option value="0003">01867</option>
+                <option value="0003">01868</option>
+                <option value="0004">01869</option>
+                <option value="0005">01870</option>
+              </select>
+            </div>
+            <div class="col-sm-3">
+              <div class="input-group date" data-target-input="nearest">
+                <span for="inputEmail3" class="col-form-label mr-3">Start date </span>
+                <input type="text" class="form-control datetimepicker-input" id="datetimepickerStart" data-toggle="datetimepicker" data-target="#datetimepickerStart"/>
+           <!--      <div class="input-group-append" data-target="#datetimepicker7" data-toggle="datetimepicker">
+                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                </div> -->
+              </div>
+            </div>
+            <div class="col-sm-3">
+              <div class="input-group date" id="datetimepickerEnd" data-target-input="nearest">
+                <label for="inputEmail3" class="col-form-label mr-3">End date </label>
+                <input type="text" class="form-control datetimepicker-input" id="datetimepickerEnd" data-toggle="datetimepicker" data-target="#datetimepickerEnd"/>
+              </div>
+            </div>
+
+          </div>
+        </form>
+        <br>
+        <hr>
+        <br> 
+        <!-- <div class="col"> -->
+          
+          <table id="tableRealTime" class="table table-striped table-bordered " style="width:100%">
+            <thead>
+                <tr> 				
+                    <th>วันที่ เวลา</th>
+                    <th>ID</th>
+                    <th>สถานที่</th>
+                    <th>อุณหภูมิ °C</th>
+                    <th>ความชื้น %</th>              
+                </tr>
+            </thead>
+            
+            <tfoot>
+                <tr>
+                  <th>วันที่ เวลา</th>
+                  <th>ID</th>
+                  <th>สถานที่</th>
+                  <th>อุณหภูมิ °C</th>
+                  <th>ความชื้น %</th>      
+                
+                </tr>
+            </tfoot>
+        </table>
+        <!-- </div> -->
+
+      <!-- </div> -->
+    </div>
+</div>
+
+<script>
+  var realtimeData = [
+    {
+      datetime: "2020-02-14 12:30:25",
+      id: "0001",
+      description: "asdfgh",
+      temperature: "7",
+      humidity: "25",
+    },
+    {
+      datetime: "2020-02-14 12:30:25",
+      id: "0002",
+      description: "asdfgh",
+      temperature: "7",
+      humidity: "25",
+    },
+    {
+      datetime: "2020-02-14 12:30:25",
+      id: "0003",
+      description: "asdfgh",
+      temperature: "7",
+      humidity: "25",
+    },
+    {
+      datetime: "2020-02-14 12:30:25",
+      id: "0004",
+      description: "asdfgh",
+      temperature: "7",
+      humidity: "25",
+    },
+    {
+      datetime: "2020-02-14 12:30:25",
+      id: "0005",
+      description: "asdfgh",
+      temperature: "7",
+      humidity: "25",
+    },
+    {
+      datetime: "2020-02-14 12:30:25",
+      id: "0006",
+      description: "asdfgh",
+      temperature: "7",
+      humidity: "25",
+    },
+  ]
+
+  $(document).ready(function() {
+    $('#tableRealTime').DataTable( {
+        "data": realtimeData,
+        "columns": [
+            { "data": "datetime" },
+            { "data": "id" },
+            { "data": "description" },
+            { "data": "temperature" },
+            { "data": "humidity" },
+        ]
+    } );
+
+    $('#datetimepickerStart').datetimepicker();
+    $('#datetimepickerEnd').datetimepicker();
+
+    $("#datetimepickerStart").on("change.datetimepicker", function (e) {
+      $('#datetimepickerEnd').datetimepicker('minDate', e.date);
+    });
+    $("#datetimepickerEnd").on("change.datetimepicker", function (e) {
+      // $('#datetimepickerEnd').datetimepicker('maxDate', e.date);
+    }); 
+
+    $("#selectID").on("change", function (e) {
+      console.log('selectID...')
+      $('#datetimepickerStart').datetimepicker('defaultDate', new Date());
+    });
+
+  } );
+
+//   var chart = c3.generate({
+//     data: {
+//         x: 'x',
+// //        xFormat: '%Y%m%d', // 'xFormat' can be used as custom format of 'x'
+//         columns: [
+//             ['x', '2013-01-01', '2013-01-02', '2013-01-03', '2013-01-04', '2013-01-05', '2013-01-06'],
+// //            ['x', '20130101', '20130102', '20130103', '20130104', '20130105', '20130106'],
+//             ['data1', 30, 200, 100, 400, 150, 250],
+//             ['data2', 130, 340, 200, 500, 250, 350]
+//         ]
+//     },
+//     axis: {
+//         x: {
+//             type: 'timeseries',
+//             tick: {
+//                 format: '%Y-%m-%d'
+//             }
+//         }
+//     }
+//   });
+
+//   setTimeout(function () {
+//     chart.load({
+//           columns: [
+//               ['data3', 400, 500, 450, 700, 600, 500]
+//           ]
+//       });
+//   }, 1000);
+
+var chart = c3.generate({
+    data: {
+        x: 'x',
+        columns: [
+            ['x', '2012-12-29', '2012-12-30', '2012-12-31'],
+            ['data1', 230, 300, 330],
+            ['data2', 190, 230, 200],
+            ['data3', 90, 130, 180],
+        ]
+    },
+    axis: {
+        x: {
+            type: 'timeseries',
+            tick: {
+                format: '%m/%d',
+            }
+        }
+    }
+  });
+
+  
+
+
+</script>
+
+</body>
+</html>

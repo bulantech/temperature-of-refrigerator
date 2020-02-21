@@ -1,0 +1,22 @@
+[debug] [2020-02-14T16:05:46.638Z] ----------------------------------------------------------------------
+[debug] [2020-02-14T16:05:46.640Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\User\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js serve --only hosting
+[debug] [2020-02-14T16:05:46.641Z] CLI Version:   7.13.0
+[debug] [2020-02-14T16:05:46.641Z] Platform:      win32
+[debug] [2020-02-14T16:05:46.641Z] Node Version:  v12.16.0
+[debug] [2020-02-14T16:05:46.642Z] Time:          Fri Feb 14 2020 23:05:46 GMT+0700 (GMT+07:00)
+[debug] [2020-02-14T16:05:46.642Z] ----------------------------------------------------------------------
+[debug] [2020-02-14T16:05:46.642Z] 
+[debug] [2020-02-14T16:05:46.655Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2020-02-14T16:05:46.656Z] > authorizing via signed-in user
+[debug] [2020-02-14T16:05:46.656Z] [iam] checking project temperature-of-refrigerator for permissions ["firebase.projects.get"]
+[debug] [2020-02-14T16:05:46.659Z] >>> HTTP REQUEST POST https://cloudresourcemanager.googleapis.com/v1/projects/temperature-of-refrigerator:testIamPermissions  
+
+[debug] [2020-02-14T16:05:48.014Z] <<< HTTP RESPONSE 200
+[debug] [2020-02-14T16:05:48.017Z] >>> HTTP REQUEST GET https://firebase.googleapis.com/v1beta1/projects/temperature-of-refrigerator  
+ 
+[debug] [2020-02-14T16:05:48.410Z] <<< HTTP RESPONSE 200
+[debug] [2020-02-14T16:05:48.413Z] >>> HTTP REQUEST GET https://firebase.googleapis.com/v1beta1/projects/temperature-of-refrigerator/webApps/-/config  
+ 
+[debug] [2020-02-14T16:05:49.649Z] <<< HTTP RESPONSE 200
+[info] i  hosting: Serving hosting files from: public
+[info] +  hosting: Local server: http://localhost:5000
