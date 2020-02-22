@@ -179,67 +179,67 @@
 <script>
   // default variable 
   var feedData = [
-    {
-      datetime: "2020-02-14 12:30:25",
-      id: "0001",
-      description: "asdfgh",
-      temperature: "10",
-      humidity: "25",
-    },  
-    {
-      datetime: "2020-02-14 12:31:25",
-      id: "0001",
-      description: "asdfgh",
-      temperature: "15",
-      humidity: "25",
-    },  
-    {
-      datetime: "2020-02-14 12:32:25",
-      id: "0001",
-      description: "asdfgh",
-      temperature: "20",
-      humidity: "25",
-    },  
-    {
-      datetime: "2020-02-14 12:33:25",
-      id: "0001",
-      description: "asdfgh",
-      temperature: "25",
-      humidity: "25",
-    },  
-    {
-      datetime: "2020-02-14 12:34:25",
-      id: "0001",
-      description: "asdfgh",
-      temperature: "30",
-      humidity: "25",
-    },  
-    {
-      datetime: "2020-02-14 12:35:25",
-      id: "0001",
-      description: "asdfgh",
-      temperature: "35",
-      humidity: "25",
-    },    
+    // {
+    //   datetime: "2020-02-14 12:30:25",
+    //   id: "0001",
+    //   description: "asdfgh",
+    //   temperature: "10",
+    //   humidity: "25",
+    // },  
+    // {
+    //   datetime: "2020-02-14 12:31:25",
+    //   id: "0001",
+    //   description: "asdfgh",
+    //   temperature: "15",
+    //   humidity: "25",
+    // },  
+    // {
+    //   datetime: "2020-02-14 12:32:25",
+    //   id: "0001",
+    //   description: "asdfgh",
+    //   temperature: "20",
+    //   humidity: "25",
+    // },  
+    // {
+    //   datetime: "2020-02-14 12:33:25",
+    //   id: "0001",
+    //   description: "asdfgh",
+    //   temperature: "25",
+    //   humidity: "25",
+    // },  
+    // {
+    //   datetime: "2020-02-14 12:34:25",
+    //   id: "0001",
+    //   description: "asdfgh",
+    //   temperature: "30",
+    //   humidity: "25",
+    // },  
+    // {
+    //   datetime: "2020-02-14 12:35:25",
+    //   id: "0001",
+    //   description: "asdfgh",
+    //   temperature: "35",
+    //   humidity: "25",
+    // },    
   ]
 
   var realtimeData = [
-    {
-      datetime: "2020-02-14 12:30:25",
-      id: "0001",
-      description: "asdfgh",
-      temperature: "17",
-      humidity: "25",
-      status: "Offline",
-    }, 
-    {
-      datetime: "2020-02-14 12:30:25",
-      id: "0002",
-      description: "11223344",
-      temperature: "7",
-      humidity: "30",
-      status: "Online",
-    },    
+    // {
+    //   datetime: "2020-02-14 12:30:25",
+    //   id: "0001",
+    //   description: "asdfgh",
+    //   temperature: "17",
+    //   humidity: "25",
+    //   status: "Offline",
+    // }, 
+    // {
+    //   datetime: "2020-02-14 12:30:25",
+    //   id: "0002",
+    //   description: "11223344",
+    //   temperature: "7",
+    //   humidity: "30",
+    //   status: "Online",
+    // },    
   ]
 
   const timeOffline = 1.5 //minute
@@ -260,7 +260,10 @@
             { "data": "humidity" },
             { "data": "status" },
         ],
-        'rowCallback': function(row, data, index){
+        "oLanguage": {
+          "sEmptyTable": "ไม่พบข้อมูลในช่วงเวลาที่เลือก"
+        },
+        "rowCallback": function(row, data, index){
           $(row).find('td:eq(5)').css('color', 'green');
           let status = $(row).find('td:eq(5)').text()
           if(status == 'Offline'){
@@ -277,7 +280,10 @@
             { "data": "description" },
             { "data": "temperature" },
             { "data": "humidity" },
-        ]
+        ],
+        "oLanguage": {
+          "sEmptyTable": "ไม่พบข้อมูลในช่วงเวลาที่เลือก"
+        }
     } );
 
     var chartFeed = c3.generate({
@@ -565,12 +571,14 @@
       queryFilter.once("value")
         .then(function(snapshot) {
           let n = snapshot.numChildren()
+          console.log('n ---------------', n)
+          if(!n) updatePush([])
           snapshot.forEach(function(childSnapshot) {
             // key will be "ada" the first time and "alan" the second time
             var key = childSnapshot.key;
             // childData will be the actual contents of the child
             var childData = childSnapshot.val();
-            console.log('queryFilter key =', key, childData)
+            // console.log('queryFilter key =', key, childData)
             dataRes.push(childData)         
             // Cancel enumeration
             // return true;
@@ -590,7 +598,7 @@
         }
         console.log('updatePush from =>', feedData) 
         $('#tableFeed').dataTable().fnClearTable();
-        $('#tableFeed').dataTable().fnAddData(feedData);
+        if(feedData.length) $('#tableFeed').dataTable().fnAddData(feedData);
 
         $('#deviceID').css('backgroundColor', 'yellow');
         $('#deviceID').animate({
