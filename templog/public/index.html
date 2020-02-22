@@ -244,6 +244,7 @@
 
   const timeOffline = 1.5 //minute
   let realtimeUpdateTime = 0
+  const tempLimit = 7
 
 
   $(document).ready(function() {
@@ -264,11 +265,29 @@
           "sEmptyTable": "ไม่พบข้อมูลในช่วงเวลาที่เลือก"
         },
         "rowCallback": function(row, data, index){
+          $(row).find('td:eq(3)').css('color', 'blue');
+          $(row).find('td:eq(4)').css('color', 'orange'); 
+
           $(row).find('td:eq(5)').css('color', 'green');
           let status = $(row).find('td:eq(5)').text()
           if(status == 'Offline'){
               $(row).find('td:eq(5)').css('color', 'red');
-          }          
+          }  
+
+          // $(row).find('td:eq(3)').css('color', '');
+          // let temp = $(row).find('td:eq(3)').text()
+          // if(temp >= 7){
+          //     $(row).find('td:eq(3)').css('color', 'red');
+          // }  
+
+          $(row).css('color', '');
+          let temp = $(row).find('td:eq(3)').text()
+          if(temp >= tempLimit){
+            $(row).css('color', 'red');
+            $(row).find('td:eq(3)').css('color', 'red');
+            $(row).find('td:eq(4)').css('color', 'red'); 
+          }    
+                  
         }
     } );
 
@@ -283,6 +302,22 @@
         ],
         "oLanguage": {
           "sEmptyTable": "ไม่พบข้อมูลในช่วงเวลาที่เลือก"
+        },
+        "rowCallback": function(row, data, index){  
+          $(row).find('td:eq(3)').css('color', 'blue');
+          $(row).find('td:eq(4)').css('color', 'orange');        
+          // $(row).find('td:eq(3)').css('color', '');
+          // let temp = $(row).find('td:eq(3)').text()
+          // if(temp >= 7){
+          //     $(row).find('td:eq(3)').css('color', 'red');
+          // }
+          $(row).css('color', '');
+          let temp = $(row).find('td:eq(3)').text()
+          if(temp >= tempLimit){
+            $(row).css('color', 'red');
+            $(row).find('td:eq(3)').css('color', 'red');
+            $(row).find('td:eq(4)').css('color', 'red'); 
+          }          
         }
     } );
 
