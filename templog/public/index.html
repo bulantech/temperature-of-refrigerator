@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Bootstrap Example</title>
+  <title>ระบบบันทึกข้อมูลอุณภูมิ และ ความชื้น สำนักงานสาธารณสุขอำเภอพนัสนิคม</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
@@ -70,7 +70,8 @@
                     <th>ID</th>
                     <th>สถานที่</th>
                     <th>อุณหภูมิ °C</th>
-                    <th>ความชื้น %</th>              
+                    <th>ความชื้น %</th>
+                    <th>สถานะ</th>              
                 </tr>
             </thead>
             
@@ -81,7 +82,7 @@
                   <th>สถานที่</th>
                   <th>อุณหภูมิ °C</th>
                   <th>ความชื้น %</th>      
-                
+                  <th>สถานะ</th>
                 </tr>
             </tfoot>
           </table>
@@ -146,7 +147,8 @@
                     <th>ID</th>
                     <th>สถานที่</th>
                     <th>อุณหภูมิ °C</th>
-                    <th>ความชื้น %</th>              
+                    <th>ความชื้น %</th> 
+                               
                 </tr>
             </thead>
             
@@ -157,7 +159,7 @@
                   <th>สถานที่</th>
                   <th>อุณหภูมิ °C</th>
                   <th>ความชื้น %</th>      
-                
+                 
                 </tr>
             </tfoot>
           </table>
@@ -228,6 +230,7 @@
       description: "asdfgh",
       temperature: "17",
       humidity: "25",
+      status: "Offline",
     }, 
     {
       datetime: "2020-02-14 12:30:25",
@@ -235,8 +238,13 @@
       description: "11223344",
       temperature: "7",
       humidity: "30",
+      status: "Online",
     },    
   ]
+
+  const timeOffline = 1.5 //minute
+  let realtimeUpdateTime = 0
+
 
   $(document).ready(function() {
 
@@ -250,7 +258,15 @@
             { "data": "description" },
             { "data": "temperature" },
             { "data": "humidity" },
-        ]
+            { "data": "status" },
+        ],
+        'rowCallback': function(row, data, index){
+          $(row).find('td:eq(5)').css('color', 'green');
+          let status = $(row).find('td:eq(5)').text()
+          if(status == 'Offline'){
+              $(row).find('td:eq(5)').css('color', 'red');
+          }          
+        }
     } );
 
     var tableFeed = $('#tableFeed').DataTable( {
@@ -360,8 +376,15 @@
 
 
     setInterval(function () {
-        $('#nowDate').text( moment(new Date()).format("DD-MM-YYYY HH:mm:ss") )
+      $('#nowDate').text( moment(new Date()).format("DD-MM-YYYY HH:mm:ss") )
     }, 1000);
+
+    setInterval(function () {
+      console.log('Check offline....')
+      const dt = new Date().getTime() //timeOffline
+      if((dt-realtimeUpdateTime) < (1*60*1000)) return
+      updateChart(realtimeData)
+    }, 30*1000);
 
     var firebaseConfig = {
       apiKey: "AIzaSyDOz_a-CO1FPWvNO322BpUN9hgdtv2GsKU",
@@ -432,17 +455,26 @@
           console.log('realtime listen =>', result) 
           // realtimeData = result  
           updateChart(result)
-          
+          realtimeUpdateTime = new Date().getTime()
         }
    
       });
     });
 
-    updateChart = (realtimeData) => {
+    updateChart = (rtData) => {
+      realtimeData = rtData
+      const dt = new Date().getTime()
       for(let i=0; i<realtimeData.length; i++) {
         realtimeData[i].datetime = moment(new Date(realtimeData[i].timestamp)).format("DD-MM-YYYY HH:mm:ss")
+            
+        if((dt - realtimeData[i].timestamp) >= (timeOffline*60*1000)) { // 2 minute
+          realtimeData[i].status = 'Offline'
+        } else {
+          realtimeData[i].status = 'Online'
+        } 
       }
-      console.log('mapDescription from =>', realtimeData) 
+      
+      console.log('updateChart from =>', realtimeData) 
       $('#tableRealTime').dataTable().fnClearTable();
       $('#tableRealTime').dataTable().fnAddData(realtimeData);
 
@@ -473,11 +505,20 @@
       console.log(' mapDescription dataArr =', dataArr)
       let n = dataArr.length
       let result 
+      // let dt = new Date().getTime()
       // dataDescription.forEach((data) => {
       for(let i=0; i<dataDescription.length; i++) {
 
-        result = dataArr.map((arr) => {
-          if(dataDescription[i].id == arr.id) arr.description=dataDescription[i].description 
+        result = dataArr.map((arr) => {          
+          // if((dt - arr.timestamp) >= (timeOffline*60*1000)) { // 2 minute
+          //   arr.status = 'Offline'
+          // } else {
+          //   arr.status = 'Online'
+          // }
+          
+          if(dataDescription[i].id == arr.id) { 
+            arr.description=dataDescription[i].description 
+          }
           return arr
         })    
       }
