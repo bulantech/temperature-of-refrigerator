@@ -286,7 +286,8 @@
             $(row).css('color', 'red');
             $(row).find('td:eq(3)').css('color', 'red');
             $(row).find('td:eq(4)').css('color', 'red'); 
-          }    
+          }
+          $(row).find('td:eq(3)').text( (Math.round(temp * 100) / 100).toFixed(2) )  // 2 digit
                   
         }
     } );
@@ -317,7 +318,9 @@
             $(row).css('color', 'red');
             $(row).find('td:eq(3)').css('color', 'red');
             $(row).find('td:eq(4)').css('color', 'red'); 
-          }          
+          }  
+          $(row).find('td:eq(3)').text( (Math.round(temp * 100) / 100).toFixed(2) )  // 2 digit
+                  
         }
     } );
 
