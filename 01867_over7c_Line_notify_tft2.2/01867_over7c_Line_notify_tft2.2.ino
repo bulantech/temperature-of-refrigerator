@@ -17,6 +17,7 @@
 #include "DHT.h"
 #define DHTPIN D3
 #define DHTTYPE DHT11
+DHT dht(DHTPIN, DHTTYPE);
 
 #include "SPI.h"
 #include "TFT_22_ILI9225.h"
@@ -34,7 +35,7 @@
 #define TFT_BRIGHTNESS 200 // Initial brightness of TFT backlight (optional)
 TFT_22_ILI9225 tft = TFT_22_ILI9225(TFT_RST, TFT_RS, TFT_CS, TFT_LED, TFT_BRIGHTNESS);
 
-DHT dht(DHTPIN, DHTTYPE);
+
 
 //Define FirebaseESP8266 data object
 FirebaseData firebaseData;
@@ -54,15 +55,20 @@ int firstCheck = 1;
 int firstStart = 1;
 double timestamp = 0;
 
-int tempOver = 29;
+int tempOver = 27;
 
 unsigned long times;
-unsigned long timesPush;
+unsigned long timesPush=99;
 
 unsigned long timesUpdate = 60000; //milisec
 unsigned long timesPushEvery = 3600000; //milisec
 int hours=99;
 int minutes=99;
+
+int sendLineEvery = 300; //sec
+
+float hNow;
+float tNow;
 
 #define X_DEF 10
 #define Y_DEF 10
@@ -71,8 +77,8 @@ int16_t x=X_DEF, y=Y_DEF, w, h; //constants for screen printing stuff
 void drawScreen(float temperature, float humidity) {
   tft.clear();
 
-  String s1 = "Temperature(°C):"; //Humidity
-  tft.setGFXFont(&FreeSans12pt7b);
+  String s1 = "Temperature(C):"; //Humidity
+  tft.setGFXFont(&FreeSans9pt7b);
   tft.getGFXTextExtent(s1, x, y, &w, &h);
   y = h;
   x = X_DEF;
@@ -80,32 +86,32 @@ void drawScreen(float temperature, float humidity) {
 
   String s2 = String(temperature, 2); //Humidity
   tft.setGFXFont(&FreeSans24pt7b);
-  tft.getGFXTextExtent(s1, x, y, &w, &h);
+  tft.getGFXTextExtent(s2, x, y, &w, &h);
   y += h + 10;
   x = 50;
-  tft.drawGFXText(x, y, s1, COLOR_GREEN);
-  if(temperature > tempOver) tft.drawGFXText(x, y, s1, COLOR_RED);
+  tft.drawGFXText(x, y, s2, COLOR_GREEN);
+  if(temperature > tempOver) tft.drawGFXText(x, y, s2, COLOR_RED);
 
   String s3 = "Humidity(%):"; //Humidity
-  tft.setGFXFont(&FreeSans12pt7b);
-  tft.getGFXTextExtent(s1, x, y, &w, &h);
+  tft.setGFXFont(&FreeSans9pt7b);
+  tft.getGFXTextExtent(s3, x, y, &w, &h);
   y += h + 20;
   x = X_DEF;
-  tft.drawGFXText(x, y, s1, COLOR_BLUE);
+  tft.drawGFXText(x, y, s3, COLOR_BLUE);
 
   String s4 = String(humidity, 2); //
   tft.setGFXFont(&FreeSans24pt7b);
-  tft.getGFXTextExtent(s1, x, y, &w, &h);
+  tft.getGFXTextExtent(s4, x, y, &w, &h);
   y += h + 10;
   x = 50;
-  tft.drawGFXText(x, y, s1, COLOR_BLUE);
+  tft.drawGFXText(x, y, s4, COLOR_BLUE);
 
   String s5 = "Device ID: "+ID; //
   tft.setGFXFont(&FreeSans9pt7b);
-  tft.getGFXTextExtent(s1, x, y, &w, &h);
-  y += h + 20;
-  x = 50;
-  tft.drawGFXText(x, y, s1, COLOR_WHITE);
+  tft.getGFXTextExtent(s5, x, y, &w, &h);
+  y += h + 30;
+  x = 10;
+  tft.drawGFXText(x, y, s5, COLOR_WHITE);
   
   // Draw first string in big font
 //  String s1 = "6789";
@@ -130,7 +136,7 @@ void drawScreen(float temperature, float humidity) {
 void setup() {
 
   ESP.wdtDisable(); ESP.wdtEnable(WDTO_8S);
-//  dht.begin();
+
   Serial.begin(115200); Serial.println();
   Serial.println(LINE.getVersion());
 
@@ -171,6 +177,8 @@ void setup() {
   */
 
    timeClient.begin();
+
+   dht.begin();
    
    tft.begin();
    tft.clear();
@@ -187,7 +195,7 @@ void loop() {
  // f = 80;
   if (isnan(h) || isnan(t) || isnan(f)) {
     Serial.println(F("Failed to read from DHT sensor!"));
-    delay(500);
+    delay(1000);
     return;
   }
 
@@ -223,12 +231,15 @@ void loop() {
 //  return;
   
   //OLED
-  drawScreen(t, h);
+  if(tNow != t) {
+    tNow = t;
+    drawScreen(t, h);
+  }
   
   //OLED
   
   if (t > tempOver) {
-    if(firstCheck || lineCount>=6) {
+    if(firstCheck || lineCount>=sendLineEvery) { //5 นาที
     
       lineCount = 0;
       firstCheck = 0;
@@ -280,7 +291,7 @@ void loop() {
   
       //Due to some internal server error, ETag cannot get from setTimestamp
       //Try to get ETag manually
-      Serial.println("ETag: " + Firebase.getETag(firebaseData, path + "/Set/Timestamp"));
+      //Serial.println("ETag: " + Firebase.getETag(firebaseData, path + "/Set/Timestamp"));
       Serial.println("------------------------------------");
       Serial.println();
   
@@ -317,30 +328,6 @@ void loop() {
       Serial.println();
     }
     
-    if(millis() - timesPush > timesPushEvery || firstStart)  {
-      timesPush = millis();
-      
-      //Also can use Firebase.push instead of Firebase.pushJSON
-      //Json string is not support in v 2.6.0 and later, only FirebaseJson object is supported.
-      
-      if (Firebase.pushJSON(firebaseData, path + "/Push/"+ID, json))
-      {
-        Serial.println("PASSED");
-        Serial.println("PATH: " + firebaseData.dataPath());
-        Serial.print("PUSH NAME: ");
-        Serial.println(firebaseData.pushName());
-        Serial.println("ETag: " + firebaseData.ETag());
-        Serial.println("------------------------------------");
-        Serial.println();
-      }
-      else
-      {
-        Serial.println("FAILED");
-        Serial.println("REASON: " + firebaseData.errorReason());
-        Serial.println("------------------------------------");
-        Serial.println();
-      }
-    }
 
     timeClient.update();
     Serial.print(daysOfTheWeek[timeClient.getDay()]);
@@ -351,6 +338,7 @@ void loop() {
     Serial.print(":");
     Serial.println(timeClient.getSeconds());
     //Serial.println(timeClient.getFormattedTime());
+    
     if(timeClient.getHours()== 3 || timeClient.getHours()== 5 ) {
       Serial.print("timeClient.getHours() "+ String(timeClient.getHours()) );
       //if(hours != timeClient.getHours() && minutes != timeClient.getMinutes() ) {
@@ -371,13 +359,40 @@ void loop() {
         LINE.notify(LineText);
       }
     }
+
+//    if(millis() - timesPush > timesPushEvery || firstStart)  {
+    if(timesPush != timeClient.getHours())  {
+      timesPush = timeClient.getHours();
+      
+      //Also can use Firebase.push instead of Firebase.pushJSON
+      //Json string is not support in v 2.6.0 and later, only FirebaseJson object is supported.
+      
+      if (Firebase.pushJSON(firebaseData, path + "/Push/"+ID, json))
+      {
+        Serial.println("PASSED");
+        Serial.println("PATH: " + firebaseData.dataPath());
+        Serial.print("PUSH NAME: ");
+        Serial.println(firebaseData.pushName());
+        //Serial.println("ETag: " + firebaseData.ETag());
+        Serial.println("------------------------------------");
+        Serial.println();
+      }
+      else
+      {
+        Serial.println("FAILED");
+        Serial.println("REASON: " + firebaseData.errorReason());
+        Serial.println("------------------------------------");
+        Serial.println();
+      }
+    }
   
     firstStart= 0 ;
   }
 
 
-  for (int i = 0; i <10; i++) {
-    ESP.wdtFeed();
-    delay(1000);
-  }
+//  for (int i = 0; i <10; i++) {
+//    ESP.wdtFeed();
+//    delay(1000);
+//  }
+  delay(1000);
 }
