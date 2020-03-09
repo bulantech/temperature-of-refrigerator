@@ -6,7 +6,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+
   <link rel="stylesheet" href="https://cdn.datatables.net/1.10.20/css/dataTables.bootstrap4.min.css">
+  <!-- <link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.6.1/css/buttons.bootstrap4.min.css"> -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.min.css">
+	<link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.6.1/css/buttons.dataTables.min.css">
+
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.13/c3.min.css">
 
   <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.css" />
@@ -18,6 +24,14 @@
   
   <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.10.20/js/dataTables.bootstrap4.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/1.6.1/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/1.6.1/js/buttons.flash.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+  <script src="https://cdn.datatables.net/buttons/1.6.1/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/1.6.1/js/buttons.print.min.js"></script>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.15.0/d3.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.13/c3.min.js"></script>
 
@@ -253,6 +267,19 @@
 
     var tableRealTime = $('#tableRealTime').DataTable( {
         "data": realtimeData,
+        dom: 'lBfrtip',
+        buttons: [
+          {
+            extend: 'print',
+            className: 'ml-4',
+            // title: 'Datatables example: Customisation of the print view window',
+            customize: function ( doc ) {
+				     	$(doc.document.body).find('h1').css('font-size', '15pt');
+				     	$(doc.document.body).find('h1').css('text-align', 'center'); 
+ 						},
+          }, 
+          'excel',
+        ],
         "columns": [
             { "data": "datetime" },
             { "data": "id" },
@@ -291,9 +318,23 @@
                   
         }
     } );
+    
 
     var tableFeed = $('#tableFeed').DataTable( {
         "data": feedData,
+        dom: 'lBfrtip',
+        buttons: [
+          {
+            extend: 'print',
+            className: 'ml-4',
+            // title: 'Datatables example: Customisation of the print view window',
+            customize: function ( doc ) {
+				     	$(doc.document.body).find('h1').css('font-size', '15pt');
+				     	$(doc.document.body).find('h1').css('text-align', 'center'); 
+ 						},
+          }, 
+          'excel',
+        ],
         "columns": [
             { "data": "datetime" },
             { "data": "id" },
@@ -326,6 +367,17 @@
 
     var chartFeed = c3.generate({
       bindto: '#chartFeed',
+      title: {
+        show: false,
+        text: 'ระบบบันทึกข้อมูลอุณภูมิ และ ความชื้น',
+        position: 'top-center',   // top-left, top-center and top-right
+        padding: {
+          top: 20,
+          right: 20,
+          bottom: 40,
+          left: 50
+        }
+      },
       type: 'line',
       data: {
           json: feedData,
@@ -367,10 +419,21 @@
       }
 
     });
-
+    
 
     var chartRealtime = c3.generate({
       bindto: '#chartRealtime',
+      title: {
+        show: false,
+        text: 'ระบบบันทึกข้อมูลอุณภูมิ และ ความชื้น (Realtime)',
+        position: 'top-center',   // top-left, top-center and top-right
+        padding: {
+          top: 20,
+          right: 20,
+          bottom: 40,
+          left: 50
+        }
+      },
       type: 'line',
       data: {
           json: realtimeData,
@@ -648,8 +711,12 @@
             });
         });
 
+        const txt = $('#deviceID').text() + ', Start: ' + moment(new Date(dts)).format("DD-MM-YYYY HH:mm:ss") + ', End: ' + moment(new Date(dte)).format("DD-MM-YYYY HH:mm:ss") 
+        d3.select('#chartFeed .c3-title').text(txt)
+
         chartFeed.load({
           json: feedData,
+
           keys: {
             x: 'datetime',
             value: ['temperature', 'humidity'],
