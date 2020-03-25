@@ -625,6 +625,7 @@
           
           if(dataDescription[i].id == arr.id) { 
             arr.description=dataDescription[i].description 
+            arr.temperature = parseFloat(arr.temperature).toFixed(2) 
           }
           return arr
         })    
