@@ -51,7 +51,7 @@
 
 	  setRealtime = (id) => {
 	  	// Math.random() * (max - min) + min;
-	  	let t = Math.random() * (15 - 0+ 1) + 0
+	  	let t = Math.random() * (15.999999 - + 1) + 1.005478
 	  	let h = Math.floor(Math.random() * (80 - 10+ 1) + 10);
 	  	firebase.database().ref("Temp/Realtime/"+id).set({ 
 				id: id, humidity: h, temperature: t, timestamp : new Date().getTime()  
