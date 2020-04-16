@@ -75,6 +75,9 @@ float tNow;
 #define Y_DEF 10
 int16_t x=X_DEF, y=Y_DEF, w, h; //constants for screen printing stuff
 
+const int lcdShowSecond=30; //sec
+int lcdShowCount=0;
+
 void drawScreen(float temperature, float humidity) {
   tft.clear();
 
@@ -233,13 +236,19 @@ void loop() {
 //  }
 //  return;
   
+//  //OLED
+//  if(tNow != t) {
+//    tNow = t;
+//    drawScreen(t, h);
+//  }
+
   //OLED
-  if(tNow != t) {
-    tNow = t;
+  if(!lcdShowCount) {
     drawScreen(t, h);
+    lcdShowCount = lcdShowSecond;
   }
-  
-  //OLED
+  --lcdShowCount;  
+  //OLED end
 
   // check Temperature
   if (t > tempOver) {
