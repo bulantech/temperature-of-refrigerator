@@ -1,27 +1,31 @@
 //FirebaseESP8266.h must be included before ESP8266WiFi.h
-#include "FirebaseESP8266.h"
-#include <TridentTD_LineNotify.h>
+#include "FirebaseESP8266.h" // mobizt/Firebase-ESP8266
+#include <TridentTD_LineNotify.h> // TridentTD/TridentTD_LineNotify
 #include <NTPClient.h>
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 
 //#define SSID        "Nam&Nano_Wifi2.4"     // SSIDบ้าน
 //#define PASSWORD    ""                     // PASSบ้าน
-#define SSID        "Health_Office"       // SSID Office
-#define PASSWORD    "z038462300"         // Pass Office
+//#define SSID        "Health_Office"       // SSID Office
+//#define PASSWORD    "z038462300"         // Pass Office
+
+// bulantech
+#define SSID        "true_home2G_350"     // SSIDบ้าน
+#define PASSWORD    "88f02350"                     // PASSบ้าน
 
 #define FIREBASE_HOST "temperature-of-refrigerator.firebaseio.com" //Without http:// or https:// schemes
 #define FIREBASE_AUTH "6fDiOSK9ApIDH851m3vLmC65oG2G7g5uKFTdyhW4"
 
 //#define LINE_TOKEN  "zbCOnOMLL8dNy1ClwK8MNNTuSS3TOiJF3suuVkh4Ri9"   // บรรทัดที่ 13 ใส่ รหัส TOKEN ที่ได้มาจากข้างบน 
 #define LINE_TOKEN  "pcYETzb9kUJI4kieSLQ2VGkjXqKm1BHQxdWUXBzLPVS"   // บรรทัดที่ 13 ใส่ รหัส TOKEN ที่ได้มาจากข้างบน
-#include "DHT.h"
+#include "DHT.h" // adafruit/DHT-sensor-library
 #define DHTPIN D3
 #define DHTTYPE DHT11
 DHT dht(DHTPIN, DHTTYPE);
 
 #include "SPI.h"
-#include "TFT_22_ILI9225.h"
+#include "TFT_22_ILI9225.h" //Nkawu/TFT_22_ILI9225
 #include <../fonts/FreeSans9pt7b.h>
 #include <../fonts/FreeSans12pt7b.h>
 #include <../fonts/FreeSans24pt7b.h>
