@@ -66,7 +66,7 @@ unsigned long timesPushEvery = 3600000; //milisec
 int hours=99;
 int minutes=99;
 
-int sendLineEvery = 300; //sec
+int sendLineEvery = 1200; //sec
 
 float hNow;
 float tNow;
@@ -75,7 +75,7 @@ float tNow;
 #define Y_DEF 10
 int16_t x=X_DEF, y=Y_DEF, w, h; //constants for screen printing stuff
 
-const int lcdShowSecond=30; //sec
+const int lcdShowSecond=120; //sec
 int lcdShowCount=0;
 
 void drawScreen(float temperature, float humidity) {
