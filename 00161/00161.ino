@@ -83,10 +83,10 @@ const int lcdShowSecond=120; //sec
 int lcdShowCount=0;
 
 #include <WifiLocation.h>
-const char* googleApiKey = "";
+const char* googleApiKey = "AIzaSyAtioUDNbceW3OZ5XatI-ylRJrCTCPnOng";
 WifiLocation location(googleApiKey);
 
-#include <WiFiManager.h> // https://github.com/tzapu/WiFiManager
+//#include <WiFiManager.h> // https://github.com/tzapu/WiFiManager
 
 
 void drawScreen(float temperature, float humidity) {
@@ -206,38 +206,38 @@ void setup() {
   Serial.println("Longitude: " + String(loc.lon, 7));
   Serial.println("Accuracy: " + String(loc.accuracy));
 
-  // WiFiManager
-  WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
-
-  // put your setup code here, to run once:
-  Serial.begin(115200);
-  
-  // WiFi.mode(WiFi_STA); // it is a good practice to make sure your code sets wifi mode how you want it.
-
-  //WiFiManager, Local intialization. Once its business is done, there is no need to keep it around
-  WiFiManager wm;
-
-  //reset settings - wipe credentials for testing
-  //wm.resetSettings();
-
-  // Automatically connect using saved credentials,
-  // if connection fails, it starts an access point with the specified name ( "AutoConnectAP"),
-  // if empty will auto generate SSID, if password is blank it will be anonymous AP (wm.autoConnect())
-  // then goes into a blocking loop awaiting configuration and will return success result
-
-  bool res;
-  // res = wm.autoConnect(); // auto generated AP name from chipid
-  // res = wm.autoConnect("AutoConnectAP"); // anonymous ap
-  res = wm.autoConnect("AutoConnectAP","password"); // password protected ap
-
-  if(!res) {
-      Serial.println("Failed to connect");
-      // ESP.restart();
-  } 
-  else {
-      //if you get here you have connected to the WiFi    
-      Serial.println("connected...yeey :)");
-  }
+//  // WiFiManager
+//  WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
+//
+//  // put your setup code here, to run once:
+//  Serial.begin(115200);
+//  
+//  // WiFi.mode(WiFi_STA); // it is a good practice to make sure your code sets wifi mode how you want it.
+//
+//  //WiFiManager, Local intialization. Once its business is done, there is no need to keep it around
+//  WiFiManager wm;
+//
+//  //reset settings - wipe credentials for testing
+//  //wm.resetSettings();
+//
+//  // Automatically connect using saved credentials,
+//  // if connection fails, it starts an access point with the specified name ( "AutoConnectAP"),
+//  // if empty will auto generate SSID, if password is blank it will be anonymous AP (wm.autoConnect())
+//  // then goes into a blocking loop awaiting configuration and will return success result
+//
+//  bool res;
+//  // res = wm.autoConnect(); // auto generated AP name from chipid
+//  // res = wm.autoConnect("AutoConnectAP"); // anonymous ap
+//  res = wm.autoConnect("AutoConnectAP","password"); // password protected ap
+//
+//  if(!res) {
+//      Serial.println("Failed to connect");
+//      // ESP.restart();
+//  } 
+//  else {
+//      //if you get here you have connected to the WiFi    
+//      Serial.println("connected...yeey :)");
+//  }
 
 }
 
