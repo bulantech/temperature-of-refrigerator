@@ -19,6 +19,8 @@
 
 //#define LINE_TOKEN  "zbCOnOMLL8dNy1ClwK8MNNTuSS3TOiJF3suuVkh4Ri9"   // บรรทัดที่ 13 ใส่ รหัส TOKEN ที่ได้มาจากข้างบน 
 #define LINE_TOKEN  "pcYETzb9kUJI4kieSLQ2VGkjXqKm1BHQxdWUXBzLPVS"   // บรรทัดที่ 13 ใส่ รหัส TOKEN ที่ได้มาจากข้างบน
+//char LINE_TOKEN[45] = "pcYETzb9kUJI4kieSLQ2VGkjXqKm1BHQxdWUXBzLPVS";
+
 #include "DHT.h" // adafruit/DHT-sensor-library
 #define DHTPIN D3
 #define DHTTYPE DHT11
@@ -39,8 +41,6 @@ DHT dht(DHTPIN, DHTTYPE);
 
 #define TFT_BRIGHTNESS 200 // Initial brightness of TFT backlight (optional)
 TFT_22_ILI9225 tft = TFT_22_ILI9225(TFT_RST, TFT_RS, TFT_CS, TFT_LED, TFT_BRIGHTNESS);
-
-
 
 //Define FirebaseESP8266 data object
 FirebaseData firebaseData;
@@ -84,10 +84,23 @@ int lcdShowCount=0;
 
 #include <WifiLocation.h>
 const char* googleApiKey = "AIzaSyAtioUDNbceW3OZ5XatI-ylRJrCTCPnOng";
-WifiLocation location(googleApiKey);
+//WifiLocation location(googleApiKey);
+float latitude=0;
+float longitude=0;
+int accuracy=0;
 
-//#include <WiFiManager.h> // https://github.com/tzapu/WiFiManager
+#include <ArduinoJson.h>  // V 5.13.4
+#include <WiFiManager.h> // v.0.15.0 https://github.com/tzapu/WiFiManager
+#define SW_PIN  0
+//#define LED 13
+#define LED 2 //nodemcu v3
 
+String line_token;
+//String googleApiKey;
+int calVal;
+char google_Api_Key[45] = ""; //39
+char cal_val[4] = "0";
+bool shouldSaveConfig = false;
 
 void drawScreen(float temperature, float humidity) {
   tft.clear();
@@ -148,24 +161,180 @@ void drawScreen(float temperature, float humidity) {
 //  tft.drawGFXText(x, y, s3, COLOR_GREEN); // Print string
 }
 
+void ledBlink() {
+  digitalWrite(LED, 0); //on
+  delay(10);
+  digitalWrite(LED, 1); //off
+}
+
 void setup() {
 
   ESP.wdtDisable(); ESP.wdtEnable(WDTO_8S);
 
   Serial.begin(115200); Serial.println();
+
+  pinMode(SW_PIN, INPUT_PULLUP);
+//  pinMode(SW_DET, INPUT_PULLUP);
+  pinMode(LED, OUTPUT); 
+  
   Serial.println(LINE.getVersion());
 
-  WiFi.begin(SSID, PASSWORD);
-  Serial.printf("WiFi connecting to %s\n",  SSID);
-  while (WiFi.status() != WL_CONNECTED) {
-    Serial.print(".");
-    delay(400);
+//  WiFi.begin(SSID, PASSWORD);
+//  Serial.printf("WiFi connecting to %s\n",  SSID);
+//  while (WiFi.status() != WL_CONNECTED) {
+//    Serial.print(".");
+//    delay(500);
+//  }
+//  Serial.printf("\nWiFi connected\nIP : ");
+//  Serial.println(WiFi.localIP());
+
+  //WiFiManager
+  //Local intialization. Once its business is done, there is no need to keep it around
+  WiFiManager wifiManager;
+
+  Serial.println("Reset wifi config?:");
+  for(int i=5; i>0; i--){
+    Serial.print(String(i)+" "); 
+    ledBlink();
+    delay(1000);
   }
-  Serial.printf("\nWiFi connected\nIP : ");
+  
+  //reset saved settings
+  if(digitalRead(SW_PIN) == LOW) // Press button
+  {
+    Serial.println();
+    Serial.println("Reset wifi config");
+    digitalWrite(LED, 0); //on
+    wifiManager.resetSettings(); 
+    SPIFFS.format();
+  }    
+
+//  wifiManager.autoConnect("AutoConnectAP");
+//  Serial.println("connected...yeey :)");
+
+  Serial.println("mounting FS...");
+
+  if (SPIFFS.begin()) {
+    Serial.println("mounted file system");
+    if (SPIFFS.exists("/config.json")) {
+      //file exists, reading and loading
+      Serial.println("reading config file");
+      File configFile = SPIFFS.open("/config.json", "r");
+      if (configFile) {
+        Serial.println("opened config file");
+        size_t size = configFile.size();
+        // Allocate a buffer to store contents of the file.
+        std::unique_ptr<char[]> buf(new char[size]);
+
+        configFile.readBytes(buf.get(), size);
+        DynamicJsonBuffer jsonBuffer;
+        JsonObject& json = jsonBuffer.parseObject(buf.get());
+        json.printTo(Serial);
+        if (json.success()) {
+          Serial.println("\nparsed json");
+        
+//          strcpy(LINE_TOKEN, json["LINE_TOKEN"]);
+//          strcpy(google_Api_Key, json["google_Api_Key"]);
+          strcpy(cal_val, json["cal_val"]);
+
+        } else {
+          Serial.println("failed to load json config");
+        }
+        configFile.close();
+      }
+    }
+  } else {
+    Serial.println("failed to mount FS");
+  }
+  //end read
+       
+//  WiFiManagerParameter custom_LINE_TOKEN("LINE_TOKEN", "LINE_TOKEN", LINE_TOKEN, 43);
+//  WiFiManagerParameter custom_google_Api_Key("google_Api_Key", "google_Api_Key", google_Api_Key, 39);
+  WiFiManagerParameter custom_cal_val("cal_val", "cal_val", cal_val, 2);
+
+  //set config save notify callback
+  wifiManager.setSaveConfigCallback(saveConfigCallback);
+
+  //set static ip
+  //wifiManager.setSTAStaticIPConfig(IPAddress(10,0,1,99), IPAddress(10,0,1,1), IPAddress(255,255,255,0));
+  
+  //add all your parameters here
+//  WiFiManagerParameter line_text("<br><span>Line token</span>");
+//  wifiManager.addParameter(&line_text);
+//  wifiManager.addParameter(&custom_LINE_TOKEN);
+
+//  WiFiManagerParameter google_Api_Key_text("<br><span>Google API Key</span>");
+//  wifiManager.addParameter(&google_Api_Key_text);
+//  wifiManager.addParameter(&custom_google_Api_Key);
+
+  WiFiManagerParameter cal_val_text("<br><span>Calibrate Value</span>");
+  wifiManager.addParameter(&cal_val_text);
+  wifiManager.addParameter(&custom_cal_val);
+
+  if (!wifiManager.autoConnect("ESPwifi")) {
+    Serial.println("failed to connect and hit timeout");
+//    delay(3000);
+    for(int i=0; i<10; i++) {
+      digitalWrite(LED_BUILTIN, 0); //on
+      delay(50);
+      digitalWrite(LED_BUILTIN, 1); //off
+      delay(500); 
+    }
+    
+    //reset and try again, or maybe put it to deep sleep
+    ESP.reset();
+    delay(5000);
+  }
+
+  //if you get here you have connected to the WiFi
+  Serial.println("connected...yeey :)");
+
+  //read updated parameters
+//  strcpy(LINE_TOKEN, custom_LINE_TOKEN.getValue());
+//  strcpy(google_Api_Key, custom_google_Api_Key.getValue());
+  strcpy(cal_val, custom_cal_val.getValue());
+
+  //save the custom parameters to FS
+  if (shouldSaveConfig) {
+    Serial.println("saving config");
+    DynamicJsonBuffer jsonBuffer;
+    JsonObject& json = jsonBuffer.createObject();
+//    Serial.println("LINE_TOKEN -> "+String(LINE_TOKEN));
+//    json["LINE_TOKEN"] = LINE_TOKEN;
+//    json["google_Api_Key"] = google_Api_Key;
+    json["cal_val"] = cal_val;
+
+    File configFile = SPIFFS.open("/config.json", "w");
+    if (!configFile) {
+      Serial.println("failed to open config file for writing");
+    }
+
+    json.printTo(Serial);
+    json.printTo(configFile);
+    configFile.close();
+    //end save
+  }
+
+//  line_token = String(LINE_TOKEN);
+//  googleApiKey = String(google_Api_Key);
+  calVal = String(cal_val).toInt();
+
+  Serial.println();
+  Serial.print("local ip: ");
   Serial.println(WiFi.localIP());
 
+//  Serial.print("line_token: ");
+//  Serial.println(line_token);
+//  Serial.print("googleApiKey: ");
+//  Serial.println(googleApiKey);
+  Serial.print("calVal: ");
+  Serial.println(calVal);
+  // end WifiManager  
+
+  
 //  // กำหนด Line Token
-  LINE.setToken(LINE_TOKEN);
+//  LINE.setToken(LINE_TOKEN);
+  LINE.setToken(line_token);
 //  String LineText = "Sensor ID: " + ID + " Restart..";
 //  LINE.notify(LineText);
 
@@ -198,49 +367,38 @@ void setup() {
    tft.begin();
    tft.clear();
 
-  //  get geographic position
-  location_t loc = location.getGeoFromWiFi();
-  Serial.println("Location request data");
-  Serial.println(location.getSurroundingWiFiJson());
-  Serial.println("Latitude: " + String(loc.lat, 7));
-  Serial.println("Longitude: " + String(loc.lon, 7));
-  Serial.println("Accuracy: " + String(loc.accuracy));
-
-//  // WiFiManager
-//  WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
-//
-//  // put your setup code here, to run once:
-//  Serial.begin(115200);
-//  
-//  // WiFi.mode(WiFi_STA); // it is a good practice to make sure your code sets wifi mode how you want it.
-//
-//  //WiFiManager, Local intialization. Once its business is done, there is no need to keep it around
-//  WiFiManager wm;
-//
-//  //reset settings - wipe credentials for testing
-//  //wm.resetSettings();
-//
-//  // Automatically connect using saved credentials,
-//  // if connection fails, it starts an access point with the specified name ( "AutoConnectAP"),
-//  // if empty will auto generate SSID, if password is blank it will be anonymous AP (wm.autoConnect())
-//  // then goes into a blocking loop awaiting configuration and will return success result
-//
-//  bool res;
-//  // res = wm.autoConnect(); // auto generated AP name from chipid
-//  // res = wm.autoConnect("AutoConnectAP"); // anonymous ap
-//  res = wm.autoConnect("AutoConnectAP","password"); // password protected ap
-//
-//  if(!res) {
-//      Serial.println("Failed to connect");
-//      // ESP.restart();
-//  } 
-//  else {
-//      //if you get here you have connected to the WiFi    
-//      Serial.println("connected...yeey :)");
-//  }
-
+  getGeographicPosition();
+  Serial.println(latitude, 7);
+  Serial.println(longitude, 7);
+  Serial.println(accuracy);
+  if(!latitude) {
+    Serial.println("Not get Geographic Position ESP.reset()!");
+    delay(5000);
+    ESP.reset();    
+  }
+  
 }
 
+void getGeographicPosition() {
+  Serial.println("Location request data..");
+  WifiLocation location(googleApiKey);
+  location_t loc = location.getGeoFromWiFi();
+//  Serial.println("Location request data");
+  Serial.println(location.getSurroundingWiFiJson());
+
+  latitude = loc.lat;
+  longitude = loc.lon;
+  accuracy = loc.accuracy;
+  
+  String Latitude = String(latitude, 7);
+  String Longitude = String(longitude, 7);
+  String Accuracy = String(accuracy);
+  
+  Serial.println("Latitude: " + Latitude);
+  Serial.println("Longitude: " + Longitude);
+  Serial.println("Accuracy: " + Accuracy); 
+}
+  
 String strLastTemp="";
 
 void loop() {
@@ -274,6 +432,7 @@ void loop() {
   Serial.print(h);
   Serial.print(F("%  Temperature: "));
   Serial.print(t);
+  Serial.print(t+calVal);
   Serial.print(F("°C "));
   Serial.print(f);
   Serial.print(F("°F  Heat index: "));
@@ -389,7 +548,7 @@ void loop() {
       timestamp = 0;
     }
 
-    json.clear().add("id", ID).add("temperature", t).add("humidity", h).add("timestamp", timestamp);
+    json.clear().add("id", ID).add("temperature", t).add("humidity", h).add("timestamp", timestamp).add("latitude", latitude).add("longitude", longitude).add("accuracy", accuracy);
 
     Serial.println("------------------------------------");
     Serial.println("Update test...");
@@ -479,4 +638,9 @@ void loop() {
 //    delay(1000);
 //  }
   delay(1000);
+}
+
+void saveConfigCallback () {
+  Serial.println("Should save config");
+  shouldSaveConfig = true;
 }
