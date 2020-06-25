@@ -83,7 +83,7 @@ const int lcdShowSecond=120; //sec
 int lcdShowCount=0;
 
 #include <WifiLocation.h>
-const char* googleApiKey = "AIzaSyAtioUDNbceW3OZ5XatI-ylRJrCTCPnOng";
+const char* googleApiKey = "YOU ARE GOOGLE API KEY";
 //WifiLocation location(googleApiKey);
 float latitude=0;
 float longitude=0;

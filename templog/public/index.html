@@ -40,6 +40,23 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.0.1/js/tempusdominus-bootstrap-4.min.js"></script>
 
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key=&callback=initMap&libraries=&v=weekly"
+    defer
+  ></script>
+
+  <style>
+    #map {
+      height: 100%;
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+
 </head>
 <body>
 
@@ -58,9 +75,24 @@
         <a class="nav-link" id="pills-profile-tab" data-toggle="pill" href="#pills-profile" role="tab" aria-controls="pills-profile" aria-selected="false">Data feed</a>
       </li>
 
+      <li class="nav-item">
+        <a class="nav-link" id="pills-map-tab" data-toggle="pill" href="#pills-map" role="tab" aria-controls="pills-map" aria-selected="false">Map</a>
+      </li>
+
     </ul>
 
     <div class="tab-content" id="pills-tabContent">
+
+      <div class="tab-pane fade" id="pills-map" role="tabpanel" aria-labelledby="pills-map-tab">
+        <div class="text-center"><h3>Map</h3> <span></span></div>
+        <div class="card mb-4">
+          <div class="card-body  text-center" style="width: 100%; height: 700px; ">    
+            <div id="map"></div>
+          </div>
+        </div>
+      </div> <!-- tab map -->
+
+
       <div class="tab-pane fade show active" id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab">
           
 
@@ -583,6 +615,9 @@
       }
       
       console.log('updateChart from =>', realtimeData) 
+
+      updateMap(realtimeData)
+
       $('#tableRealTime').dataTable().fnClearTable();
       $('#tableRealTime').dataTable().fnAddData(realtimeData);
 
@@ -738,6 +773,207 @@
 
 
   } ); // $(document).ready(function() {
+
+  // map =====================================================================
+  let firstMapInit = 0
+  var map;
+  var markers = [];
+
+  function initMap() {
+    console.log('initMap: ========>')
+    map = new google.maps.Map(document.getElementById('map'), {
+      zoom: 10,
+      center: {lat: 13.736717, lng: 100.523186} // Thailand
+    });
+    // const bounds = setMarkers(map, beaches);
+
+    // console.log('bounds =>', bounds)
+    // if(!firstMapInit) setTimeout(()=>{ map.fitBounds(bounds); firstMapInit = 1; }, 3000)
+    // map.fitBounds(bounds);
+
+  }
+
+  function updateMap(beaches) {
+    console.log('updateMap: beaches =>', beaches)
+    // var map = new google.maps.Map(document.getElementById('map'), {
+    //   zoom: 10,
+    //   center: {lat: 13.736717, lng: 100.523186} // Thailand
+    // });
+    clearMarkers()
+    const bounds = setMarkers(map, beaches);
+
+    // console.log('bounds =>', bounds)
+    if(!firstMapInit) setTimeout(()=>{ map.fitBounds(bounds); firstMapInit = 1; }, 3000)
+    // map.fitBounds(bounds);
+
+  }
+
+  function setMarkers(map, beaches) {
+
+    // datetime: "25-03-2020 19:53:48"
+    // description: "room 0001"
+    // humidity: 38
+    // id: "0001"
+    // status: "Offline"
+    // temperature: "7.77"
+    // timestamp: 1585140828280
+
+    // Adds markers to the map.
+
+    var image = {
+      url: 'https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png',
+      // This marker is 20 pixels wide by 32 pixels high.
+      size: new google.maps.Size(32, 32),
+      // The origin for this image is (0, 0).
+      origin: new google.maps.Point(0, 0),
+      // The anchor for this image is the base of the flagpole at (0, 32).
+      anchor: new google.maps.Point(0, 32)
+    };
+
+    var iconRed = {
+      path: "M-20,0a20,20 0 1,0 40,0a20,20 0 1,0 -40,0",
+      fillColor: '#d9534f',
+      fillOpacity: .6,
+      anchor: new google.maps.Point(0,0),
+      strokeWeight: 0,
+      scale: 1
+    }
+
+    var iconBlue = {
+      path: "M-20,0a20,20 0 1,0 40,0a20,20 0 1,0 -40,0",
+      fillColor: '#0275d8',
+      fillOpacity: .6,
+      anchor: new google.maps.Point(0,0),
+      strokeWeight: 0,
+      scale: 1
+    }
+
+    var iconBlack = {
+      path: "M-20,0a20,20 0 1,0 40,0a20,20 0 1,0 -40,0",
+      fillColor: '#292b2c',
+      fillOpacity: .6,
+      anchor: new google.maps.Point(0,0),
+      strokeWeight: 0,
+      scale: 1
+    }
+
+    var shape = {
+      coords: [1, 1, 1, 20, 18, 20, 18, 1],
+      type: 'poly'
+    };
+
+    var bounds = new google.maps.LatLngBounds();
+
+    for (var i = 0; i < beaches.length; i++) {
+      var beach = beaches[i];
+
+      if(!beach.latitude || !beach.longitude) continue
+
+      let icon = iconBlack //offline
+      if(beach.status==='Online') {
+        beach.temperature <= tempLimit ? icon = iconBlue : icon = iconRed
+      } 
+
+
+      var marker = new google.maps.Marker({
+        position: {lat: beach.latitude, lng: beach.longitude},
+        map: map,
+        icon: icon, //image,
+        // shape: shape,
+        title: beach.description, //name,
+        zIndex: i, //beach.index
+      });
+
+      markers.push(marker);
+
+      // var contentString = '<div id="content">'+
+     //  '</div>';
+      var content = `
+        <div style="text-align: left;">
+          <h6>${beach.description}</h6>
+          <table>
+            <tr><td>ID:</td><td>${beach.id}</td></tr>
+            <tr><td>Temperature:</td><td>${beach.temperature}</td></tr>
+            <tr><td>Humidity:</td><td>${beach.humidity}</td></tr>
+            <tr><td>Status:</td><td>${beach.status}</td></tr>
+          </table>
+        </div>
+      `
+
+      // var infowindow = new google.maps.InfoWindow({
+      //   content: contentString
+      // });
+      var infowindow = new google.maps.InfoWindow();
+
+     //  marker.addListener('click', function() {
+     //   infowindow.setContent(content);
+      //   infowindow.open(map, marker);
+      // });
+
+      google.maps.event.addListener(marker,'click', (function(marker,content,infowindow){ 
+          return function() {
+              infowindow.setContent(content);
+              infowindow.open(map,marker);
+          };
+      })(marker,content,infowindow));  
+
+     //  marker.addListener('mouseover', function() {
+      //     infowindow.open(map, this);
+      // });
+
+      // // assuming you also want to hide the infowindow when user mouses-out
+      // marker.addListener('mouseout', function() {
+      //     infowindow.close();
+      // });
+      
+      bounds.extend(marker.getPosition());
+      // map.fitBounds(bounds);
+      console.log('marker.getPosition() =>', marker.getPosition().lat())
+
+    }
+
+    // To add the marker to the map, call setMap();
+    // marker.setMap(map);
+
+    // console.log('bounds =>', bounds)
+    //now fit the map to the newly inclusive bounds
+    // map.fitBounds(bounds);
+
+    return bounds
+
+  }
+
+  // Adds a marker to the map and push to the array.
+  function addMarker(location) {
+    var marker = new google.maps.Marker({
+      position: location,
+      map: map
+    });
+    markers.push(marker);
+  }
+
+  // Sets the map on all markers in the array.
+  function setMapOnAll(map) {
+    for (var i = 0; i < markers.length; i++) {
+      markers[i].setMap(map);
+    }
+  }
+
+  // Removes the markers from the map, but keeps them in the array.
+  function clearMarkers() {
+    setMapOnAll(null);
+  }
+
+  // Shows any markers currently in the array.
+  function showMarkers() {
+    setMapOnAll(map);
+  }
+
+  // Deletes all markers in the array by removing references to them.
+  function deleteMarkers() {
+    clearMarkers();
+    markers = [];
+  }
 
   </script>
 
