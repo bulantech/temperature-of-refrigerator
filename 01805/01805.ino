@@ -1,71 +1,34 @@
 //FirebaseESP8266.h must be included before ESP8266WiFi.h
 #include "FirebaseESP8266.h" // mobizt/Firebase-ESP8266
 #include <TridentTD_LineNotify.h> // TridentTD/TridentTD_LineNotify
-#include <NTPClient.h>
+#include <NTPClient.h> //Li เวลาจากอินเตอร์เนต
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 //
-//#define SSID        "Nam&Nano_Wifi2.4"     // SSIDบ้าน
-//#define PASSWORD    ""                     // PASSบ้าน
+#define SSID        "Nam&Nano_Wifi2.4"     // SSIDบ้าน
+#define PASSWORD    ""                     // PASSบ้าน
 //#define SSID        "Health_Office"       // SSID Office
 //#define PASSWORD    "z038462300"         // Pass Office
 
-// bulantech
-#define SSID        "TrueGigatexFiber_5G_A48"     // SSIDบ้าน
-#define PASSWORD    "dn3p93tk"                     // PASSบ้าน
+//#define SSID        "TrueGigatexFiber_2.4G_A48"     // SSIDบ้าน
+//#define PASSWORD    "dn3p93tk"                     // PASSบ้าน
 
-#define FIREBASE_HOST "temperature-of-refrigerator.firebaseio.com" //Without http:// or https:// schemes
-#define FIREBASE_AUTH "6fDiOSK9ApIDH851m3vLmC65oG2G7g5uKFTdyhW4"
+// ตัวแปรเปลี่ยนค่า -------------------
+String ID = "01804";
+int calVal=-2; // ค่าคาลิเรท
 
-//#define LINE_TOKEN  "" //bulantech  // บรรทัดที่ 13 ใส่ รหัส TOKEN ที่ได้มาจากข้างบน 
-#define LINE_TOKEN  "pcYETzb9kUJI4kieSLQ2VGkjXqKm1BHQxdWUXBzLPVS"   // บรรทัดที่ 13 ใส่ รหัส TOKEN ที่ได้มาจากข้างบน
-//char LINE_TOKEN[45] = "pcYETzb9kUJI4kieSLQ2VGkjXqKm1BHQxdWUXBzLPVS";
-
-#include "DHT.h" // adafruit/DHT-sensor-library
-#define DHTPIN D3
-#define DHTTYPE DHT11
-DHT dht(DHTPIN, DHTTYPE);
-
-#include "SPI.h"
-#include "TFT_22_ILI9225.h" //Nkawu/TFT_22_ILI9225
-#include <../fonts/FreeSans9pt7b.h>
-#include <../fonts/FreeSans12pt7b.h>
-#include <../fonts/FreeSans24pt7b.h>
-
-#define TFT_RST D2
-#define TFT_RS  D4
-#define TFT_CS  D8  // SS
-#define TFT_SDI D7  // MOSI
-#define TFT_CLK D5  // SCK
-#define TFT_LED -1
-
-#define TFT_BRIGHTNESS 200 // Initial brightness of TFT backlight (optional)
-TFT_22_ILI9225 tft = TFT_22_ILI9225(TFT_RST, TFT_RS, TFT_CS, TFT_LED, TFT_BRIGHTNESS);
-
-//Define FirebaseESP8266 data object
-FirebaseData firebaseData;
-FirebaseJson json;
-
-const long utcOffsetInSeconds =  7 * 60 * 60; //3600;
-char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
-
-// Define NTP Client to get time
-WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
-
-String ID = "001612";
-
+const int line_send_1 = 9; //ส่งไลน์ครั้งที่1
+const int line_send_2 = 15; //ส่งไลน์ครั้งที่2
 int lineCount = 0;
 int firstCheck = 1;
 int firstStart = 1;
 double timestamp = 0;
 
 int tempOver = 7;
-
 unsigned long times;
 unsigned long timesPush=99;
 
-unsigned long timesUpdate = 60000; //milisec
+unsigned long timesUpdate = 90000; //milisec
 unsigned long timesPushEvery = 3600000; //milisec
 int hours=99;
 int minutes=99;
@@ -75,38 +38,63 @@ int sendLineEvery = 1200; //sec
 float hNow;
 float tNow;
 
+const int lcdShowSecond=120; //sec
+int lcdShowCount=0;
+
+String strLastTemp="";
+
+#define FIREBASE_HOST "temp-chonburi-sso.firebaseio.com" //Without http:// or https:// schemes
+#define FIREBASE_AUTH "DncJwCCmiLqu70qzGJUI9Ch4lLyxA963I4PNzRFz"
+
+FirebaseData firebaseData;
+FirebaseJson json;
+
+#define LINE_TOKEN  "tLizkeBHy33vJRk2WFl4a0gaEMjyocuwQTHu8gM0azo"   // ใส่ รหัส TOKEN ที่ได้มาจากข้างบน
+
+// อ่านอุณหภูมิ
+#include "DHT.h" // adafruit/DHT-sensor-library
+#define DHTPIN D3
+#define DHTTYPE DHT11
+DHT dht(DHTPIN, DHTTYPE);
+
+// จอ lcd
+#include <SPI.h> //การเรียกใช้ Libary
+#include <TFT_22_ILI9225.h> //Nkawu/TFT_22_ILI9225
+#include <../fonts/FreeSans9pt7b.h>
+#include <../fonts/FreeSans12pt7b.h>
+#include <../fonts/FreeSans24pt7b.h>
+
+#define TFT_RST D2 //ประกาศค่าคงที่
+#define TFT_RS  D4
+#define TFT_CS  D8  // SS
+#define TFT_SDI D7  // MOSI
+#define TFT_CLK D5  // SCK
+#define TFT_LED -1  //set 0 if wired to +5V directly -> D3=0 is not possible !!
+
+#define TFT_BRIGHTNESS 200 // Initial brightness of TFT backlight (optional)
+// Use hardware SPI (faster - on Uno: 13-SCK, 12-MISO, 11-MOSI)
+//TFT_22_ILI9225 tft = TFT_22_ILI9225(TFT_RST, TFT_RS, TFT_CS, TFT_LED, TFT_BRIGHTNESS);
+// Use software SPI (slower)
+TFT_22_ILI9225 tft = TFT_22_ILI9225(TFT_RST, TFT_RS, TFT_CS, TFT_SDI, TFT_CLK, TFT_LED, TFT_BRIGHTNESS);
+
+
+// ตัวแปร globle
+const long utcOffsetInSeconds =  7 * 60 * 60; //3600; //ประกาศค่าคงที่ const ประกาศได้ทุกที่
+char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+
+// Define NTP Client to get time
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
+
 #define X_DEF 10
 #define Y_DEF 10
 int16_t x=X_DEF, y=Y_DEF, w, h; //constants for screen printing stuff
 
-const int lcdShowSecond=120; //sec
-int lcdShowCount=0;
-
-#include <WifiLocation.h>
-const char* googleApiKey = ""; //AIzaSyCx5vN4VV2ePypTBi1FFl9Gk94JKqZZT4U // //bulantech
-//WifiLocation location(googleApiKey);
-float latitude=0;
-float longitude=0;
-int accuracy=0;
-
-//#include <ArduinoJson.h>  // V 5.13.4
-//#include <WiFiManager.h> // v.0.15.0 https://github.com/tzapu/WiFiManager
-#define SW_PIN  0
-//#define LED 13
-#define LED 2 //nodemcu v3
-
-String line_token;
-//String googleApiKey;
-
-int calVal=-1; // ค่าคาลิเรท
-
-//char google_Api_Key = "AIzaSyAtioUDNbceW3OZ5XatI-ylRJrCTCPnOng"; 
-char cal_val[4] = "0";
-bool shouldSaveConfig = false;
 
 void drawScreen(float temperature, float humidity) {
-  tft.clear();
-
+  
+  tft.clear(); //เครียหน้าจอ
+  tft.fillRectangle(0, 0, tft.maxX(), tft.maxY(), COLOR_BLACK);
   String s1 = "Temperature(C):"; //Humidity
   tft.setGFXFont(&FreeSans9pt7b);
   tft.getGFXTextExtent(s1, x, y, &w, &h);
@@ -142,212 +130,53 @@ void drawScreen(float temperature, float humidity) {
   y += h + 30;
   x = 10;
   tft.drawGFXText(x, y, s5, COLOR_WHITE);
-  
-  // Draw first string in big font
-//  String s1 = "6789";
-//  tft.setGFXFont(&FreeSans24pt7b); // Set current font FreeSans9pt7b
-//  tft.getGFXTextExtent(s1, x, y, &w, &h); // Get string extents
-//  y = h; // Set y position to string height
-//  tft.drawGFXText(x, y, s1, COLOR_RED); // Print string
-//
-//  // Draw second string in smaller font
-//  tft.setGFXFont(&FreeSans12pt7b);  // Change font
-//  String s2 = "Hello"; // Create string object
-//  tft.getGFXTextExtent(s2, x, y, &w, &h); // Get string extents
-//  y += h + 10; // Set y position to string height plus shift down 10 pixels
-//  tft.drawGFXText(x, y, s2, COLOR_BLUE); // Print string
-//  
-//  // Draw third string in same font
-//  String s3 = "World!"; // Create string object
-//  y += h + 2; // Set y position to previous string height plus shift down 2 pixels
-//  tft.drawGFXText(x, y, s3, COLOR_GREEN); // Print string
+
 }
 
-void ledBlink() {
-  digitalWrite(LED, 0); //on
-  delay(10);
-  digitalWrite(LED, 1); //off
-}
-
+#include <WifiLocation.h>
+const char* googleApiKey = "AIzaSyAtioUDNbceW3OZ5XatI-ylRJrCTCPnOng"; //AIzaSyCx5vN4VV2ePypTBi1FFl9Gk94JKqZZT4U //AIzaSyAtioUDNbceW3OZ5XatI-ylRJrCTCPnOng //bulantech
+//WifiLocation location(googleApiKey);
+float latitude=0;
+float longitude=0;
+int accuracy=0;
 void setup() {
+  ESP.wdtDisable(); ESP.wdtEnable(WDTO_8S); //เฝ้าไม่ให้contolerทำงานค้าง 8วิ
 
-  ESP.wdtDisable(); ESP.wdtEnable(WDTO_8S);
-
-  Serial.begin(115200); Serial.println();
-
-  pinMode(SW_PIN, INPUT_PULLUP);
-//  pinMode(SW_DET, INPUT_PULLUP);
-  pinMode(LED, OUTPUT); 
+  Serial.begin(115200); Serial.println(); //อันดับแรกต้องกำหนด sn port
   
   Serial.println(LINE.getVersion());
 
-  WiFi.begin(SSID, PASSWORD);
+  tft.begin(); //เริ่มต้น Libary จอLCD
+//  tft.clear(); //เครียหน้าจอ
+
+  tft.clear(); //เครียหน้าจอ
+  tft.fillRectangle(0, 0, tft.maxX(), tft.maxY(), COLOR_RED);
+  tft.setFont(Terminal6x8);
+  tft.setBackgroundColor(COLOR_RED);
+  tft.drawText(10, 10, "WiFi connect..", COLOR_WHITE);  
+  
+  WiFi.begin(SSID, PASSWORD); //เรียกฟังชั่นการเชื่อมต่อ wifi ให้ใส่ ssid กับ pass wifi
   Serial.printf("WiFi connecting to %s\n",  SSID);
-  while (WiFi.status() != WL_CONNECTED) {
-    Serial.print(".");
+  while (WiFi.status() != WL_CONNECTED) { //ให้แสดง Status การเชื่อมตอ่
+    Serial.print("."); // ถ้าเชื่อมไม่ได้ให้ .....
     delay(500);
   }
-  Serial.printf("\nWiFi connected\nIP : ");
-  Serial.println(WiFi.localIP());
+  Serial.printf("\nWiFi connected\nIP : "); 
+  Serial.println(WiFi.localIP()); //แสดง IP ที่ได้รับ
 
-//  //WiFiManager
-//  //Local intialization. Once its business is done, there is no need to keep it around
-//  WiFiManager wifiManager;
-//
-//  Serial.println("Reset wifi config?:");
-//  for(int i=5; i>0; i--){
-//    Serial.print(String(i)+" "); 
-//    ledBlink();
-//    delay(1000);
-//  }
-//  
-//  //reset saved settings
-//  if(digitalRead(SW_PIN) == LOW) // Press button
-//  {
-//    Serial.println();
-//    Serial.println("Reset wifi config");
-//    digitalWrite(LED, 0); //on
-//    wifiManager.resetSettings(); 
-//    SPIFFS.format();
-//  }    
-//
-////  wifiManager.autoConnect("AutoConnectAP");
-////  Serial.println("connected...yeey :)");
-//
-//  Serial.println("mounting FS...");
-//
-//  if (SPIFFS.begin()) {
-//    Serial.println("mounted file system");
-//    if (SPIFFS.exists("/config.json")) {
-//      //file exists, reading and loading
-//      Serial.println("reading config file");
-//      File configFile = SPIFFS.open("/config.json", "r");
-//      if (configFile) {
-//        Serial.println("opened config file");
-//        size_t size = configFile.size();
-//        // Allocate a buffer to store contents of the file.
-//        std::unique_ptr<char[]> buf(new char[size]);
-//
-//        configFile.readBytes(buf.get(), size);
-//        DynamicJsonBuffer jsonBuffer;
-//        JsonObject& json = jsonBuffer.parseObject(buf.get());
-//        json.printTo(Serial);
-//        if (json.success()) {
-//          Serial.println("\nparsed json");
-//        
-////          strcpy(LINE_TOKEN, json["LINE_TOKEN"]);
-////          strcpy(google_Api_Key, json["google_Api_Key"]);
-//          strcpy(cal_val, json["cal_val"]);
-//
-//        } else {
-//          Serial.println("failed to load json config");
-//        }
-//        configFile.close();
-//      }
-//    }
-//  } else {
-//    Serial.println("failed to mount FS");
-//  }
-//  //end read
-//       
-////  WiFiManagerParameter custom_LINE_TOKEN("LINE_TOKEN", "LINE_TOKEN", LINE_TOKEN, 43);
-////  WiFiManagerParameter custom_google_Api_Key("google_Api_Key", "google_Api_Key", google_Api_Key, 39);
-//  WiFiManagerParameter custom_cal_val("cal_val", "cal_val", cal_val, 2);
-//
-//  //set config save notify callback
-//  wifiManager.setSaveConfigCallback(saveConfigCallback);
-//
-//  //set static ip
-//  //wifiManager.setSTAStaticIPConfig(IPAddress(10,0,1,99), IPAddress(10,0,1,1), IPAddress(255,255,255,0));
-//  
-//  //add all your parameters here
-////  WiFiManagerParameter line_text("<br><span>Line token</span>");
-////  wifiManager.addParameter(&line_text);
-////  wifiManager.addParameter(&custom_LINE_TOKEN);
-//
-////  WiFiManagerParameter google_Api_Key_text("<br><span>Google API Key</span>");
-////  wifiManager.addParameter(&google_Api_Key_text);
-////  wifiManager.addParameter(&custom_google_Api_Key);
-//
-//  WiFiManagerParameter cal_val_text("<br><span>Calibrate Value</span>");
-//  wifiManager.addParameter(&cal_val_text);
-//  wifiManager.addParameter(&custom_cal_val);
-//
-//  if (!wifiManager.autoConnect("ESPwifi")) {
-//    Serial.println("failed to connect and hit timeout");
-////    delay(3000);
-//    for(int i=0; i<10; i++) {
-//      digitalWrite(LED_BUILTIN, 0); //on
-//      delay(50);
-//      digitalWrite(LED_BUILTIN, 1); //off
-//      delay(500); 
-//    }
-//    
-//    //reset and try again, or maybe put it to deep sleep
-//    ESP.reset();
-//    delay(5000);
-//  }
-//
-//  //if you get here you have connected to the WiFi
-//  Serial.println("connected...yeey :)");
-//
-//  //read updated parameters
-////  strcpy(LINE_TOKEN, custom_LINE_TOKEN.getValue());
-////  strcpy(google_Api_Key, custom_google_Api_Key.getValue());
-//  strcpy(cal_val, custom_cal_val.getValue());
-//
-//  //save the custom parameters to FS
-//  if (shouldSaveConfig) {
-//    Serial.println("saving config");
-//    DynamicJsonBuffer jsonBuffer;
-//    JsonObject& json = jsonBuffer.createObject();
-////    Serial.println("LINE_TOKEN -> "+String(LINE_TOKEN));
-////    json["LINE_TOKEN"] = LINE_TOKEN;
-////    json["google_Api_Key"] = google_Api_Key;
-//    json["cal_val"] = cal_val;
-//
-//    File configFile = SPIFFS.open("/config.json", "w");
-//    if (!configFile) {
-//      Serial.println("failed to open config file for writing");
-//    }
-//
-//    json.printTo(Serial);
-//    json.printTo(configFile);
-//    configFile.close();
-//    //end save
-//  }
-//
-////  line_token = String(LINE_TOKEN);
-////  googleApiKey = String(google_Api_Key);
-//  calVal = String(cal_val).toInt();
-//
-//  Serial.println();
-//  Serial.print("local ip: ");
-//  Serial.println(WiFi.localIP());
-//
-////  Serial.print("line_token: ");
-////  Serial.println(line_token);
-////  Serial.print("googleApiKey: ");
-////  Serial.println(googleApiKey);
-//  Serial.print("calVal: ");
-//  Serial.println(calVal);
-//  // end WifiManager  
-
-  
-//  // กำหนด Line Token
-//  LINE.setToken(LINE_TOKEN);
+  // กำหนด Line Token
   LINE.setToken(LINE_TOKEN);
 //  String LineText = "Sensor ID: " + ID + " Restart..";
 //  LINE.notify(LineText);
 
-  Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
-  Firebase.reconnectWiFi(true);
+  Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH); //ใส่ urlของProject,Token
+  Firebase.reconnectWiFi(true); //ให้เชื่อมต่อใหม่เมื่อหลุด
 
   //Set the size of WiFi rx/tx buffers in the case where we want to work with large data.
-  firebaseData.setBSSLBufferSize(1024, 1024);
+  firebaseData.setBSSLBufferSize(1024, 1024); //กำหนด Buffer ส่งข้อมูล
 
   //Set the size of HTTP response buffers in the case where we want to work with large data.
-  firebaseData.setResponseSize(1024);
+  firebaseData.setResponseSize(1024); //กำหนด Buffer ตัวรับข้อมูล
 
   //Set database read timeout to 1 minute (max 15 minutes)
   Firebase.setReadTimeout(firebaseData, 1000 * 60);
@@ -362,14 +191,17 @@ void setup() {
   Firebase.enableClassicRequest(firebaseData, true);
   */
 
-   timeClient.begin();
+   timeClient.begin(); //Setใช้งาน NTP
 
-   dht.begin();
-   
-   tft.begin();
-   tft.clear();
+   dht.begin(); //เริ่มต้น LIbary อ่านอุณหภูมิ
 
-  getGeographicPosition();
+  tft.clear(); //เครียหน้าจอ
+  tft.fillRectangle(0, 0, tft.maxX(), tft.maxY(), COLOR_GREEN);
+  tft.setFont(Terminal6x8);  
+  tft.setBackgroundColor(COLOR_GREEN);
+  tft.drawText(10, 10, "get Geographic..", COLOR_WHITE);
+  
+  getGeographicPosition(); //อ่าน Lat,long จากwifi Location
   Serial.println(latitude, 7);
   Serial.println(longitude, 7);
   Serial.println(accuracy);
@@ -378,6 +210,12 @@ void setup() {
     delay(5000);
     ESP.reset();    
   }
+
+  tft.clear(); //เครียหน้าจอ
+  tft.fillRectangle(0, 0, tft.maxX(), tft.maxY(), COLOR_BLUE);
+  tft.setFont(Terminal6x8);
+  tft.setBackgroundColor(COLOR_BLUE);
+  tft.drawText(10, 10, "Setup ok!", COLOR_WHITE);
   
 }
 
@@ -402,11 +240,9 @@ void getGeographicPosition() {
   Serial.println("Longitude: " + Longitude);
   Serial.println("Accuracy: " + Accuracy); 
 }
-  
-String strLastTemp="";
 
 void loop() {
-
+//tft.clear(); //เครียหน้าจอ
   // test
 //  Serial.println(F("loop().."));
 //  delay(5000);
@@ -444,7 +280,7 @@ void loop() {
   Serial.print(F(" "));
   Serial.print(t+calVal);
 
-  t = t+calVal;
+  t = t+calVal;//อ่านค่าที่ได้จริง ไปบวกค่าที่คาริเบท
   
   Serial.print(F("°C "));
   Serial.print(f);
@@ -454,26 +290,17 @@ void loop() {
   Serial.print(hif);
   Serial.println(F("°F"));
 
-//  for (int i = 0; i <10; i++) {
-//    ESP.wdtFeed();
-//    delay(1000);
-//  }
-//  return;
-  
-//  //OLED
-//  if(tNow != t) {
-//    tNow = t;
-//    drawScreen(t, h);
-//  }
-
-  //OLED
+  //lcd
   if(!lcdShowCount) {
+    
     drawScreen(t, h);
     lcdShowCount = lcdShowSecond;
   }
   --lcdShowCount;  
-  //OLED end
+  //lcd end
 
+//  delay(3000); return; //test
+  
   // check Temperature
   if (t > tempOver) {
 //    Serial.println("========== (t > tempOver)");
@@ -497,7 +324,7 @@ void loop() {
             
       Serial.print("Line");
       Serial.println(LineText);
-//      LINE.notify(LineText);
+      LINE.notify(LineText); //comment for test
  
     }
     lineCount++;
@@ -562,7 +389,7 @@ void loop() {
       timestamp = 0;
     }
 
-    json.clear().add("id", ID).add("temperature", t).add("humidity", h).add("timestamp", timestamp).add("latitude", latitude).add("longitude", longitude).add("accuracy", accuracy);
+//    json.clear().add("id", ID).add("temperature", t).add("humidity", h).add("timestamp", timestamp).add("latitude", latitude).add("longitude", longitude).add("accuracy", accuracy);
 //    json.clear().add("id", ID).add("temperature", t).add("humidity", h).add("timestamp", timestamp);
 
     Serial.println("------------------------------------");
@@ -596,8 +423,9 @@ void loop() {
     Serial.print(":");
     Serial.println(timeClient.getSeconds());
     //Serial.println(timeClient.getFormattedTime());
-    
-    if(timeClient.getHours()== 9 || timeClient.getHours()== 15 ) {
+
+    // ส่ง line ตามเวลาที่กำหนด
+    if(timeClient.getHours()== line_send_1 || timeClient.getHours()== line_send_2 ) {
       Serial.print("timeClient.getHours() "+ String(timeClient.getHours()) );
       //if(hours != timeClient.getHours() && minutes != timeClient.getMinutes() ) {
       if( hours != timeClient.getHours() ) {
@@ -614,7 +442,7 @@ void loop() {
         LineText = "SensorID:" + ID + string1 + t + string2  + string3 + h + string4 + first;
         Serial.print("Line "+ String(hours) + String(minutes) );
         Serial.println(LineText);
-        LINE.notify(LineText);
+        LINE.notify(LineText); //comment for test
       }
     }
 
@@ -647,15 +475,5 @@ void loop() {
     firstStart= 0 ;
   }
 
-
-//  for (int i = 0; i <10; i++) {
-//    ESP.wdtFeed();
-//    delay(1000);
-//  }
   delay(1000);
-}
-
-void saveConfigCallback () {
-  Serial.println("Should save config");
-  shouldSaveConfig = true;
 }
