@@ -389,7 +389,7 @@ void loop() {
       timestamp = 0;
     }
 
-//    json.clear().add("id", ID).add("temperature", t).add("humidity", h).add("timestamp", timestamp).add("latitude", latitude).add("longitude", longitude).add("accuracy", accuracy);
+    json.clear().add("id", ID).add("temperature", t).add("humidity", h).add("timestamp", timestamp).add("latitude", latitude).add("longitude", longitude).add("accuracy", accuracy);
 //    json.clear().add("id", ID).add("temperature", t).add("humidity", h).add("timestamp", timestamp);
 
     Serial.println("------------------------------------");
